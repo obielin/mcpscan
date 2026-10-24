@@ -39,6 +39,16 @@ class MCPFinding:
     def __repr__(self) -> str:
         return f"MCPFinding({self.rule_id}, {self.severity.value})"
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.rule_id,
+            "name": self.name,
+            "severity": self.severity.value,
+            "description": self.rule.description,
+            "remediation": self.rule.remediation,
+            "snippets": self.snippets,
+        }
+
 
 @dataclass
 class MCPScanResult:
@@ -76,6 +86,17 @@ class MCPScanResult:
             f"MCPScanResult({self.server_name!r}, "
             f"{self.risk_level}, score={self.risk_score:.0f})"
         )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "server": self.server_name,
+            "risk_level": self.risk_level,
+            "risk_score": self.risk_score,
+            "tool_count": self.tool_count,
+            "findings": [f.to_dict() for f in self.findings],
+            "error": self.error,
+            "scan_time_ms": self.scan_time_ms,
+        }
 
 
 @dataclass
@@ -116,6 +137,14 @@ class MCPBatchReport:
                 lines.append(f"    -> {f.rule_id}: {f.name}")
         lines += ["=" * 64, ""]
         return "\n".join(lines)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "total": self.total,
+            "critical": self.critical_count,
+            "flagged": self.flagged_count,
+            "results": [r.to_dict() for r in self.results],
+        }
 
 
 def _compute_risk(findings: list[MCPFinding]) -> tuple[float, str]:

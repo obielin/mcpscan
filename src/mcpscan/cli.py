@@ -70,34 +70,7 @@ def cmd_scan(args) -> int:
         paths = list(path.glob("*.json")) + list(path.glob("**/*manifest*.json"))
         report = scanner.scan_files(paths)
         if args.format == "json":
-            print(
-                json.dumps(
-                    {
-                        "total": report.total,
-                        "critical": report.critical_count,
-                        "flagged": report.flagged_count,
-                        "results": [
-                            {
-                                "server": r.server_name,
-                                "risk_level": r.risk_level,
-                                "risk_score": r.risk_score,
-                                "tool_count": r.tool_count,
-                                "findings": [
-                                    {
-                                        "id": f.rule_id,
-                                        "name": f.name,
-                                        "severity": f.severity.value,
-                                        "snippets": f.snippets,
-                                    }
-                                    for f in r.findings
-                                ],
-                            }
-                            for r in report.results
-                        ],
-                    },
-                    indent=2,
-                )
-            )
+            print(json.dumps(report.to_dict(), indent=2))
         else:
             print(report.summary())
         return 1 if report.critical_count > 0 else 0
@@ -105,28 +78,7 @@ def cmd_scan(args) -> int:
     result = scanner.scan_file(path)
 
     if args.format == "json":
-        print(
-            json.dumps(
-                {
-                    "server": result.server_name,
-                    "risk_level": result.risk_level,
-                    "risk_score": result.risk_score,
-                    "tool_count": result.tool_count,
-                    "findings": [
-                        {
-                            "id": f.rule_id,
-                            "name": f.name,
-                            "severity": f.severity.value,
-                            "description": f.rule.description,
-                            "remediation": f.rule.remediation,
-                            "snippets": f.snippets,
-                        }
-                        for f in result.findings
-                    ],
-                },
-                indent=2,
-            )
-        )
+        print(json.dumps(result.to_dict(), indent=2))
     else:
         _print_result(result, verbose=args.verbose)
 
