@@ -101,6 +101,12 @@ mcpscan rules
 
 ---
 
+### GitHub code scanning
+
+Run `mcpscan scan ./manifests --format sarif > results.sarif` to emit SARIF 2.1.0
+for upload with GitHub CodeQL's `upload-sarif` action. Findings retain their rule
+metadata and input-file locations; HIGH/CRITICAL scans still exit 1.
+
 ## Python API
 
 ```python

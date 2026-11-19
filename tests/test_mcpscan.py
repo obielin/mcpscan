@@ -534,3 +534,27 @@ class TestRiskLevelAndExitCode:
         (tmp_path / "server.json").write_text(json.dumps(CLEAN_MANIFEST))
         assert _run_scan(tmp_path / "server.json") == 0
         assert _run_scan(tmp_path) == 0
+
+
+@pytest.mark.parametrize("directory", [False, True])
+def test_sarif_cli_output(tmp_path, capsys, monkeypatch, directory):
+    from mcpscan.cli import main
+
+    path = tmp_path / "nested" / "unsafe manifest.json"
+    path.parent.mkdir()
+    path.write_text(json.dumps(PROMPT_INJECTION_MANIFEST), encoding="utf-8")
+    monkeypatch.setattr(
+        sys, "argv", ["mcpscan", "scan", str(tmp_path if directory else path), "--format", "sarif"]
+    )
+    with pytest.raises(SystemExit) as exit_info:
+        main()
+    assert exit_info.value.code == 1
+    log = json.loads(capsys.readouterr().out)
+    assert log["version"] == "2.1.0"
+    run = log["runs"][0]
+    from mcpscan.rules import ALL_RULES
+
+    assert [r["id"] for r in run["tool"]["driver"]["rules"]] == [r.id for r in ALL_RULES]
+    hit = next(r for r in run["results"] if r["ruleId"] == "MR-001")
+    assert hit["level"] == "error"
+    assert hit["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == path.as_uri()

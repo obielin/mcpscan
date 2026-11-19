@@ -75,7 +75,11 @@ def cmd_scan(args) -> int:
         # keeps a file from being scanned twice and sorting keeps output stable.
         paths = sorted(set(path.rglob("*.json")))
         report = scanner.scan_files(paths)
-        if args.format == "json":
+        if args.format == "sarif":
+            from mcpscan.sarif import to_sarif
+
+            print(json.dumps(to_sarif(report, paths=paths), indent=2))
+        elif args.format == "json":
             print(
                 json.dumps(
                     {
@@ -110,7 +114,11 @@ def cmd_scan(args) -> int:
 
     result = scanner.scan_file(path)
 
-    if args.format == "json":
+    if args.format == "sarif":
+        from mcpscan.sarif import to_sarif
+
+        print(json.dumps(to_sarif(result, paths=[path]), indent=2))
+    elif args.format == "json":
         print(
             json.dumps(
                 {
@@ -167,7 +175,7 @@ Examples:
 
     p_scan = sub.add_parser("scan", help="Scan an MCP manifest file or directory")
     p_scan.add_argument("target", help="JSON manifest file or directory")
-    p_scan.add_argument("--format", choices=["text", "json"], default="text")
+    p_scan.add_argument("--format", choices=["text", "json", "sarif"], default="text")
     p_scan.add_argument("--verbose", "-v", action="store_true", help="Show matched snippets")
     p_scan.set_defaults(func=cmd_scan)
 
