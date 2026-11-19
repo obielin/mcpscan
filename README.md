@@ -47,6 +47,9 @@ mcpscan scan server.json
 
 ---
 
+MR-001 also checks tool descriptions and schemas for hidden instruction tags, secrecy
+phrases, sensitive SSH/environment paths, and invisible or bidirectional control characters.
+
 ## Install
 
 ```bash

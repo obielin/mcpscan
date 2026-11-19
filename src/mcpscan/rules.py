@@ -6,6 +6,7 @@ Zero external dependencies.
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from enum import Enum
@@ -52,13 +53,19 @@ class PromptInjectionRule(MCPRule):
             r"(?:bypass|override|disable)\s+(?:safety|content|ethical)\s+(?:filter|guardrail)",
             r"act\s+as\s+if\s+you\s+have\s+no\s+restrictions?",
             r"forget\s+(?:everything|all)\s+(?:you|above)",
+            r"<(?:important|system|hidden[_-]?instructions?)\b[^>]*>",
+            r"(?:do\s+not|don['’]t|never)\s+(?:mention|reveal|disclose|tell)\b[^.\n]{0,120}\b(?:user|human)\b",
+            r"[/\\]+\.ssh[/\\]+(?:id_[a-z0-9_]+|authorized_keys)\b",
+            r"(?<![\w.])\.env(?:\.[a-z0-9_-]+)?(?![\w.])",
+            r"[\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]",
         ]
     ]
 
     def check(self, target: dict[str, Any]) -> list[str]:
         findings = []
         for tool in target.get("tools", []):
-            text = f"{tool.get('name','')} {tool.get('description','')} {str(tool.get('inputSchema',''))}"
+            schema = json.dumps(tool.get("inputSchema", {}), ensure_ascii=False)
+            text = f"{tool.get('name','')} {tool.get('description','')} {schema}"
             for pat in self._PATTERNS:
                 if pat.search(text):
                     findings.append(f"Tool '{tool.get('name','?')}': {pat.pattern[:60]}")
